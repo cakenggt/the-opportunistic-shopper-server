@@ -41,8 +41,12 @@ else{
         case 'GOOGLE':
           oauth2client.verifyIdToken(token, credentials.APP_CLIENT_ID, function(err, tokenInfo){
             if (!err){
-              req.profile = userManager.findUserByGoogleId(tokenInfo.getPayload().sub);
-              next();
+              let payload = tokenInfo.getPayload();
+              userManager.findOrCreateUserByGoogleId(payload.sub, payload.email)
+              .then(function(user){
+                req.profile = user;
+                next();
+              });
             }
             else{
               res.json({
