@@ -4,7 +4,6 @@ const credentials = require('./credentials');
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-const pg = require('pg');
 const http = require('http').Server(app);
 const GoogleAuth = require('google-auth-library');
 const authFactory = new GoogleAuth();
@@ -20,16 +19,19 @@ app.use(bodyParser.json());
 if (argv.DEVELOPMENT || argv.DEV || argv.D){
   console.log('Starting in Development mode');
   app.use(function(req, res, next){
+    let authorization = req.headers.authorization;
+    let token = authorization.split(' ')[1];
     req.profile = {
-      sub: req.body.token,
-      name: req.body.token
+      sub: token,
+      name: token
     };
     next();
   });
 }
 else{
   app.use(function(req, res, next){
-    let token = req.headers.authorization;
+    let authorization = req.headers.authorization;
+    let token = authorization.split(' ')[1];
     if (token){
       oauth2client.verifyIdToken(token, credentials.APP_CLIENT_ID, function(err, tokenInfo){
         if (!err){
@@ -57,3 +59,6 @@ else{
 http.listen(credentials.PORT, function(){
   console.log('Example app listening on port', credentials.PORT, '!');
 });
+
+//Load the api versions
+require('./api/v1')(app);
