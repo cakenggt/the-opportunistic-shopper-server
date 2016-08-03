@@ -1,0 +1,19 @@
+{
+  "name": "the-opportunistic-shopper",
+  "version": "0.0.1",
+  "description": "Delayed location-based shopping list",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "author": "Alec Lownes",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "google-auth-library": "^0.9.8",
+    "pg": "^6.0.2",
+    "yargs": "^4.8.1"
+  }
+}
