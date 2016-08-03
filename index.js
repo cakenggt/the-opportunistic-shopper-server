@@ -10,6 +10,8 @@ const authFactory = new GoogleAuth();
 const oauth2client = new authFactory.OAuth2();
 const argv = require('yargs').argv;
 
+const userManager = require('./manager/userManager');
+
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
@@ -31,20 +33,31 @@ if (argv.DEVELOPMENT || argv.DEV || argv.D){
 else{
   app.use(function(req, res, next){
     let authorization = req.headers.authorization;
-    let token = authorization.split(' ')[1];
+    let authParts = authorization.split(' ');
+    let authType = authParts[0];
+    let token = authParts[1];
     if (token){
-      oauth2client.verifyIdToken(token, credentials.APP_CLIENT_ID, function(err, tokenInfo){
-        if (!err){
-          req.profile = tokenInfo.getPayload();
-          next();
-        }
-        else{
+      switch (authType){
+        case 'GOOGLE':
+          oauth2client.verifyIdToken(token, credentials.APP_CLIENT_ID, function(err, tokenInfo){
+            if (!err){
+              req.profile = userManager.findUserByGoogleId(tokenInfo.getPayload().sub);
+              next();
+            }
+            else{
+              res.json({
+                "errors": ['Invalid token', err.message]
+              });
+              res.end();
+            }
+          });
+          break;
+        default:
           res.json({
-            "errors": ['Invalid token', err.message]
+            "errors": ['Unknown auth type']
           });
           res.end();
-        }
-      });
+      }
     }
     else{
       console.log(req);
