@@ -24,8 +24,9 @@ if (argv.DEVELOPMENT || argv.DEV || argv.D){
     let authorization = req.headers.authorization;
     let token = authorization.split(' ')[1];
     req.profile = {
-      sub: token,
-      name: token
+      id: token,
+      email: token,
+      google_id: token
     };
     next();
   });
