@@ -106,7 +106,6 @@ function createProduct(client, callback){
 
 function createUserStore(client, callback){
   client.query("create table user_stores ( "+
-  "id serial primary key, "+
   "user_id integer references users, "+
   "store_id integer references stores, "+
   "name text)", callback);
@@ -114,7 +113,6 @@ function createUserStore(client, callback){
 
 function createStoreProduct(client, callback){
   client.query("create table store_products ( "+
-  "id serial primary key, "+
   "store_id integer references stores, "+
   "product_id integer references products)", callback);
 }

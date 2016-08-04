@@ -83,6 +83,98 @@ class UserManager {
       return self.findUserByGoogleId(id);
     });
   }
+
+  /**
+   * Creates a user store association.
+   * @param {UserStoreAssociation} association Object representation of a
+   * user store association
+   * @returns {Promise} Promise which resolves with the result of the query
+   */
+  createUserStoreAssociation(userId, storeId, name){
+    let self = this;
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query("insert into user_stores (user_id, store_id, name) "+
+        "values ($1, $2, $3) ", [userId, storeId, name],
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result);
+        });
+      });
+    });
+  }
+
+  /**
+   * Deletes a user store association
+   * @param {Number} user_id Id of the user
+   * @param {Number} store_id Id of the store
+   * @returns {Promise} Promise which resolves with the result of the query
+   */
+  deleteUserStoreAssociation(user_id, store_id){
+    let self = this;
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query("delete "+
+        "from user_stores "+
+        "where user_id = $1 and store_id = $2", [user_id, store_id],
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result);
+        });
+      });
+    });
+  }
+
+  /**
+   * Updates a store record.
+   * @param {UserStoreAssociation} store Object representation of the store to update
+   * @returns {Promise} Promise which resolves with the result of the query
+   */
+  updateUserStoreAssociation(association){
+    let self = this;
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query("update user_stores "+
+        "set name = $1 "+
+        "where user_id = $2 and store_id = $3",
+        [association.name, association.userId, association.store_id],
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result);
+        });
+      });
+    });
+  }
 }
 
 module.exports = function(connectionString){

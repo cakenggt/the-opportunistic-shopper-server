@@ -50,6 +50,22 @@ describe('user dao', function(){
 });
 describe('store dao', function(){
   it('create store', function(){
-    return storeManager.createStore(testStore1.name, testStore1.location, testUserId);
+    return storeManager.createStore(testStore1.name, testStore1.location, testUserId)
+    .then(function(){
+      return storeManager.findStoresWithinRadiusOfLocation(testStore1.location, 5)
+      .then(function(result){
+        expect(result[0]).to.exist;
+        testStore1Id = result[0];
+      });
+    });
+  });
+  it('create user_store', function(){
+    return userManager.createUserStoreAssociation(testUserId, testStore1Id, testStore1.name);
+  });
+  it('get stores within radius of user', function(){
+    return storeManager.findStoresWithinRadiusOfUser(testUserId, testStore1.location, 5)
+    .then(function(result){
+      expect(result[0]).to.equal(testStore1Id);
+    });
   });
 });
