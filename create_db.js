@@ -4,62 +4,67 @@
 const credentials = require('./credentials');
 const pg = require('pg');
 
-pg.connect(credentials.DATABASE_URL, function(err, client, done){
-  if (err){
-    return console.error('error fetching client from pool', err);
-  }
-  client.query("drop table if exists store_products", function(err){
-    if (err){
-      console.error('error', err);
-      return;
-    }
-    client.query("drop table if exists user_stores", function(err){
+function createDB(){
+  return new Promise(function(resolve, reject){
+    pg.connect(credentials.DATABASE_URL, function(err, client, done){
       if (err){
-        console.error('error', err);
-        return;
+        return console.error('error fetching client from pool', err);
       }
-      client.query("drop table if exists products", function(err){
+      client.query("drop table if exists store_products", function(err){
         if (err){
           console.error('error', err);
           return;
         }
-        client.query("drop table if exists stores", function(err){
+        client.query("drop table if exists user_stores", function(err){
           if (err){
             console.error('error', err);
             return;
           }
-          client.query("drop table if exists users", function(err){
+          client.query("drop table if exists products", function(err){
             if (err){
               console.error('error', err);
               return;
             }
-            createUser(client, function(err){
+            client.query("drop table if exists stores", function(err){
               if (err){
                 console.error('error', err);
                 return;
               }
-              createStore(client, function(err){
+              client.query("drop table if exists users", function(err){
                 if (err){
                   console.error('error', err);
                   return;
                 }
-                createProduct(client, function(err){
+                createUser(client, function(err){
                   if (err){
                     console.error('error', err);
                     return;
                   }
-                  createUserStore(client, function(err){
+                  createStore(client, function(err){
                     if (err){
                       console.error('error', err);
                       return;
                     }
-                    createStoreProduct(client, function(err){
+                    createProduct(client, function(err){
                       if (err){
                         console.error('error', err);
                         return;
                       }
-                      done();
-                      pg.end();
+                      createUserStore(client, function(err){
+                        if (err){
+                          console.error('error', err);
+                          return;
+                        }
+                        createStoreProduct(client, function(err){
+                          if (err){
+                            console.error('error', err);
+                            return;
+                          }
+                          done();
+                          pg.end();
+                          resolve();
+                        });
+                      });
                     });
                   });
                 });
@@ -70,7 +75,9 @@ pg.connect(credentials.DATABASE_URL, function(err, client, done){
       });
     });
   });
-});
+}
+exports.createDB = createDB;
+
 
 function createUser(client, callback){
   client.query("create table users ( "+
@@ -110,4 +117,8 @@ function createStoreProduct(client, callback){
   "id serial primary key, "+
   "store_id integer references stores, "+
   "product_id integer references products)", callback);
+}
+
+if (require.main === module){
+  createDB();
 }

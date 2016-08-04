@@ -18,7 +18,7 @@ exports.findUserByGoogleId = function(id){
       }
       client.query("select * "+
       "from users "+
-      "where id = $1", [id],
+      "where google_id = $1", [id],
       function(err, result){
         if (err){
           reject(err);
@@ -62,13 +62,3 @@ exports.createGoogleUserIfNotExists = function(id, email){
     });
   });
 };
-
-/*
-INSERT INTO example_table
-    (id, name)
-SELECT 1, 'John'
-WHERE
-    NOT EXISTS (
-        SELECT id FROM example_table WHERE id = 1
-    );
-*/
