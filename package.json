@@ -15,5 +15,9 @@
     "google-auth-library": "^0.9.8",
     "pg": "^6.0.2",
     "yargs": "^4.8.1"
+  },
+  "devDependencies": {
+    "chai": "*",
+    "mocha": "*"
   }
 }
