@@ -24,3 +24,16 @@ exports.getStoresByUser = function(userId){
 exports.getStoresWithinRadiusOfUser = function(userId, location, radius){
   return storeDao.getStoresWithinRadiusOfUser(userId, location, radius);
 };
+
+/**
+ * Creates a store
+ * @param {String} name Store name
+ * @param {Object} location Location object
+ * @param {Number} location.latitude Latitude value
+ * @param {Number} location.longitude Longitude value
+ * @param {Number} userId Created by user id
+ * @returns {Promise} Promise which resolves with the query result
+ */
+exports.createStore = function(name, location, userId){
+  return storeDao.createStore(name, location, userId);
+};
