@@ -4,9 +4,9 @@
 const credentials = require('./credentials');
 const pg = require('pg');
 
-function createDB(){
+function createDB(connectionString){
   return new Promise(function(resolve, reject){
-    pg.connect(credentials.DATABASE_URL, function(err, client, done){
+    pg.connect(connectionString, function(err, client, done){
       if (err){
         return console.error('error fetching client from pool', err);
       }
@@ -120,5 +120,5 @@ function createStoreProduct(client, callback){
 }
 
 if (require.main === module){
-  createDB();
+  createDB(credentials.DATABASE_URL);
 }

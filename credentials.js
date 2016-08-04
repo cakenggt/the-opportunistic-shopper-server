@@ -7,4 +7,5 @@ const PORT = process.env.PORT || 3000;
 
 exports.APP_CLIENT_ID = APP_CLIENT_ID;
 exports.DATABASE_URL = DATABASE_URL;
+exports.TEST_DATABASE_URL = TEST_DATABASE_URL;
 exports.PORT = PORT;

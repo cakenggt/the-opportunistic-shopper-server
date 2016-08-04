@@ -78,4 +78,8 @@ http.listen(credentials.PORT, function(){
 });
 
 //Load the api versions
-require('./api/v1')(app);
+let apiOptions = {
+  app: app,
+  connectionString: credentials.DATABASE_URL
+};
+require('./api/v1')(apiOptions);

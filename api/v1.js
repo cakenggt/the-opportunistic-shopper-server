@@ -1,10 +1,14 @@
 'use strict';
 
-const storeManager = require('../manager/storeManager');
-const productManager = require('../manager/productManager');
 const prefix = '/api/v1/';
 
-module.exports = function(app){
+module.exports = function(options){
+
+  let app = options.app;
+  let connectionString = options.connectionString;
+  const storeManager = require('../manager/storeManager')(connectionString);
+  const productManager = require('../manager/productManager')(connectionString);
+
   app.get(prefix+'all', function(req, res){
     //TODO
   });
