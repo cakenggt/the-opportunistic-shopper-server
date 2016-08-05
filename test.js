@@ -23,6 +23,13 @@ const testStore1 = {
   }
 };
 let testStore1Id;
+const testProduct1 = {
+  name: 'testProduct1',
+  description: 'test product description',
+  status: 'ACTIVE',
+  sponsored: false
+};
+let testProduct1Id;
 
 before(function(){
   //reset the test db
@@ -45,6 +52,7 @@ describe('user manager', function(){
       expect(result.google_id).to.equal(testUser.google_id);
       expect(result.id).to.exist;
       testUserId = result.id;
+      testProduct1.user_id = testUserId;
     });
   });
 });
@@ -69,16 +77,33 @@ describe('store manager', function(){
     });
   });
 });
+describe('product manager', function(){
+  it('create product', function(){
+    return productManager.createProduct(testProduct1)
+    .then(function(){
+      return productManager.findProductsByUser(testUserId)
+      .then(function(result){
+        testProduct1Id = result[0].id;
+      });
+    });
+  });
+  it('associate with test store 1', function(){
+    return productManager.createStoreProducts([testStore1Id], [testProduct1Id]);
+  });
+});
 describe('api', function(){
   describe('v1', function(){
     it('/all', function(){
       return userManager.getCompleteStoreAndProductDataByUser(testUserId)
       .then(function(result){
         expect(result.products).to.exist;
+        expect(result.products.ids).to.have.length.gt(0);
+        expect(result.products.data[testProduct1Id]).to.exist;
+        expect(result.products.data[testProduct1Id].description).to.equal(testProduct1.description);
         expect(result.stores).to.exist;
         expect(result.stores.ids).to.have.length.gt(0);
-        expect(result.stores.data[1]).to.exist;
-        expect(result.stores.data[1].name).to.equal(testStore1.name);
+        expect(result.stores.data[testStore1Id]).to.exist;
+        expect(result.stores.data[testStore1Id].name).to.equal(testStore1.name);
       });
     });
   });

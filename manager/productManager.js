@@ -2,6 +2,16 @@
 
 const pg = require('pg');
 
+/**
+ * A Product record
+ * @typedef {Object} Product
+ * @property {String} name - Name of the product
+ * @property {String} description - Description of the product
+ * @property {Number} user_id Id of the user who this product belongs to
+ * @property {String} status Status of product
+ * @property {boolean} sponsored - Whether product is sponsored or not
+ */
+
 class ProductManager {
   constructor(connectionString){
     this.connectionString = connectionString;
@@ -74,6 +84,38 @@ class ProductManager {
           }
           done();
           resolve(result.rows);
+        });
+      });
+    });
+  }
+
+  /**
+   * Creates a product
+   * @param {Product} product Product to create
+   * @returns {Promise} Promise which resolves with the query result
+   */
+  createProduct(product){
+    let self = this;
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query(`
+          insert into products (name, description, user_id, status, sponsored)
+          values ($1, $2, $3, $4, $5)`,
+        [product.name, product.description, product.user_id,
+          product.status, product.sponsored],
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result);
         });
       });
     });
