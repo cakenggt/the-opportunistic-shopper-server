@@ -18,9 +18,32 @@ const pg = require('pg');
   * @property {String} name User defined name of the store
   */
 
+/**
+ * A Store and Product JSON
+ * @typedef {Object} StoreAndProductJSON
+ * @property {Object} products - Product map
+ * @property {Array.<Number>} products.ids - Array of product ids
+ * @property {Object} products.data - Map of product id to product data
+ * @property {String} products.data.name - Name of product
+ * @property {String} products.data.description - Description of product
+ * @property {String} products.data.status - Status of product
+ * @property {Array.<Number>} products.data.stores - Array of store ids
+ * this product is found at
+ * @property {Object} stores - Store map
+ * @property {Array.<Number>} stores.ids - Array of store ids
+ * @property {Object} stores.data - Map of product id to store data
+ * @property {String} stores.data.name - Name of store
+ * @property {Number} stores.data.latitude - Latitude of store
+ * @property {Number} stores.data.longitude - Longitude of store
+ * @property {Array.<Number>} stores.data.products - Array of product ids
+ * found at this store
+ */
+
 class UserManager {
   constructor(connectionString){
     this.connectionString = connectionString;
+    this.storeManager = require('../manager/storeManager')(connectionString);
+    this.productManager = require('../manager/productManager')(connectionString);
   }
 
   /**
@@ -198,6 +221,69 @@ class UserManager {
           resolve(result);
         });
       });
+    });
+  }
+
+  /**
+   * Gets the complete store and product json for the user.
+   * @param {Number} userId Id of the user
+   * @returns {StoreAndProductJSON} Store and product JSON
+   */
+  getCompleteStoreAndProductDataByUser(userId){
+    let totalResult = {};
+    let self = this;
+    return Promise.all([
+      self.productManager.findProductsByUserAndFetchStores(userId)
+      .then(function(result){
+        let products = {};
+        let ids = [];
+        let data = {};
+        for (let r = 0; r < result.length; r++){
+          let res = result[r];
+          //If not already in the ids list, put there
+          if (!data[res.product_id]){
+            ids.push(res.product_id);
+          }
+          let entry = data[res.product_id]||{stores:[]};
+          entry.name = res.name;
+          entry.description = res.description;
+          entry.status = res.status;
+          if (res.store_id){
+            entry.stores.push(res.store_id);
+          }
+          data[res.product_id] = entry;
+        }
+        products.ids = ids;
+        products.data = data;
+        totalResult.products = products;
+      }),
+      self.storeManager.findStoresByUserAndFetchProducts(userId)
+      .then(function(result){
+        let stores = {};
+        let ids = [];
+        let data = {};
+        for (let r = 0; r < result.length; r++){
+          let res = result[r];
+          //If not already in the ids list, put there
+          if (!data[res.store_id]){
+            ids.push(res.store_id);
+          }
+          let entry = data[res.store_id]||{products:[]};
+          entry.name = res.name;
+          entry.latitude = res.latitude;
+          entry.longitude = res.longitude;
+          if (res.product_id){
+            entry.products.push(res.product_id);
+          }
+          data[res.store_id] = entry;
+        }
+        stores.ids = ids;
+        stores.data = data;
+        totalResult.stores = stores;
+      })
+    ])
+    .then(function(){
+      return totalResult;
     });
   }
 }

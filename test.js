@@ -28,7 +28,7 @@ before(function(){
   //reset the test db
   return require('./create_db').createDB(credentials.TEST_DATABASE_URL);
 });
-describe('user dao', function(){
+describe('user manager', function(){
   it('user doesn\'t exist', function(){
     return userManager.findUserByGoogleId(testUser.google_id)
     .then(function(result){
@@ -48,7 +48,7 @@ describe('user dao', function(){
     });
   });
 });
-describe('store dao', function(){
+describe('store manager', function(){
   it('create store', function(){
     return storeManager.createStore(testStore1.name, testStore1.location, testUserId)
     .then(function(){
@@ -66,6 +66,20 @@ describe('store dao', function(){
     return storeManager.findStoresWithinRadiusOfUser(testUserId, testStore1.location, 5)
     .then(function(result){
       expect(result[0]).to.equal(testStore1Id);
+    });
+  });
+});
+describe('api', function(){
+  describe('v1', function(){
+    it('/all', function(){
+      return userManager.getCompleteStoreAndProductDataByUser(testUserId)
+      .then(function(result){
+        expect(result.products).to.exist;
+        expect(result.stores).to.exist;
+        expect(result.stores.ids).to.have.length.gt(0);
+        expect(result.stores.data[1]).to.exist;
+        expect(result.stores.data[1].name).to.equal(testStore1.name);
+      });
     });
   });
 });

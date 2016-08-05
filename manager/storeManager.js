@@ -197,9 +197,50 @@ class StoreManager {
           st_x(store.location::geometry) as latitude,
           st_y(store.location::geometry) as longitude,
           us.name as name,
-          store.created_by_user_id as created_by_user_id 
+          store.created_by_user_id as created_by_user_id
           from user_stores us
           where user_id = $1`, [userId],
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result.rows);
+        });
+      });
+    });
+  }
+
+  /**
+   * Finds all stores which the user is associated with. The stores
+   * are duplicated in the list, once for each product the user
+   * has said is at the store.
+   * @param {Number} userId Id of the user.
+   * @returns {Promise} Promise which resolves with an array of Stores
+   * with an additional product_id attribute
+   */
+  findStoresByUserAndFetchProducts(userId){
+    let self = this;
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query(`
+          select store.id as store_id, us.name,
+          st_x(store.location::geometry) as latitude,
+          st_y(store.location::geometry) as longitude,
+          product.id as product_id
+          from stores store
+          left join store_products sp on sp.store_id = store.id
+          left join products product on product.id = sp.product_id
+          left join user_stores us on us.store_id = store.id
+          where (product.user_id is null or product.user_id = $1)
+          and us.user_id = $1`, [userId],
         function(err, result){
           if (err){
             reject(err);

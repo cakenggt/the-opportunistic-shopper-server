@@ -8,9 +8,14 @@ module.exports = function(options){
   let connectionString = options.connectionString;
   const storeManager = require('../manager/storeManager')(connectionString);
   const productManager = require('../manager/productManager')(connectionString);
+  const userManager = require('../manager/userManager')(connectionString);
 
   app.get(prefix+'all', function(req, res){
-    //TODO
+    userManager.getCompleteStoreAndProductDataByUser(req.profile.id)
+    .then(function(result){
+      res.json(result);
+      res.end();
+    });
   });
 
   app.get(prefix+'nearby', function(req, res){
