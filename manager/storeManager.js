@@ -2,6 +2,24 @@
 
 const pg = require('pg');
 
+/**
+ * A Location
+ * @typedef {Object} Location
+ * @property {Number} latitude Latitude value
+ * @property {Number} longitude Longitude value
+ */
+
+/**
+ * A Store record
+ * @typedef {Object} Store
+ * @property {Number} id - Id of the store
+ * @property {String} name - Name of the store. If gotten with a user's id,
+ * then this will be the name the user custom-assigned to their store record
+ * @property {Number} latitude Latitude value
+ * @property {Number} longitude Longitude value
+ * @property {Number} created_by_user_id - Id of the user who created this store
+ */
+
 class StoreManager {
   constructor(connectionString){
     this.connectionString = connectionString;
@@ -11,11 +29,8 @@ class StoreManager {
    * Gets the stores that are associated with a user and are also
    * within a certain radius of a location.
    * @param {Number} userId User ID
-   * @param {Object} location Location object
-   * @param {Number} location.latitude Latitude value
-   * @param {Number} location.longitude Longitude value
-   * @param {Number} radius Radius in meters
-   * @returns {Promise} Promise which resolves with an array of store ids
+   * @param {Location} location Location object
+   * @returns {Promise} Promise which resolves with Array.<Store>
    */
   findStoresWithinRadiusOfUser(userId, location, radius){
     let self = this;
@@ -26,7 +41,10 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("select store.id as id "+
+        client.query("select store.id as id, "+
+        "st_x(store.location::geometry) as latitude, "+
+        "st_y(store.location::geometry) as longitude, "+
+        "us.name as name, store.created_by_user_id as created_by_user_id "+
         "from user_stores us "+
         "left join stores store on store.id = us.store_id "+
         "where us.user_id = $1 and "+
@@ -52,11 +70,9 @@ class StoreManager {
 
   /**
    * Gets the stores that are within a certain radius of a location.
-   * @param {Object} location Location object
-   * @param {Number} location.latitude Latitude value
-   * @param {Number} location.longitude Longitude value
+   * @param {Location} location Location object
    * @param {Number} radius Radius in meters
-   * @returns {Promise} Promise which resolves with an array of store ids
+   * @returns {Promise} Promise which resolves with Array.<Store>
    */
   findStoresWithinRadiusOfLocation(location, radius){
     let self = this;
@@ -67,7 +83,10 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("select store.id as id "+
+        client.query("select store.id as id, "+
+        "st_x(store.location::geometry) as latitude, "+
+        "st_y(store.location::geometry) as longitude, "+
+        "store.name as name, store.created_by_user_id as created_by_user_id "+
         "from stores store "+
         "where st_distance(st_geogfromtext('POINT('||$2||' '||$1||')'), store.location) <= $3",
         [location.latitude, location.longitude, radius],
@@ -92,9 +111,7 @@ class StoreManager {
   /**
    * Creates a store
    * @param {String} name Store name
-   * @param {Object} location Location object
-   * @param {Number} location.latitude Latitude value
-   * @param {Number} location.longitude Longitude value
+   * @param {Location} location Location object
    * @param {Number} userId Created by user id
    * @returns {Promise} Promise which resolves with the query result
    */
@@ -141,8 +158,8 @@ class StoreManager {
         "set name = $1, location = st_geogfromtext('POINT('||$3||' '||$2||')'), "+
         "created_by_user_id = $4 "+
         "where id = $5",
-        [store.name, store.location.latitude,
-        store.location.longitude, store.created_by_user_id, store.id],
+        [store.name, store.latitude,
+        store.longitude, store.created_by_user_id, store.id],
         function(err, result){
           if (err){
             reject(err);
@@ -159,9 +176,7 @@ class StoreManager {
   /**
    * Finds a user store association
    * @param {Number} userId Id of the user.
-   * @returns {Promise} Promise which resolves with a list of objects which
-   * have a name and store_id property, representing the stores associated with
-   * this user and the user's names for them.
+   * @returns {Promise} Promise which resolves with Array.<Store>
    */
   findStoresByUser(userId){
     let self = this;
@@ -172,7 +187,10 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("select us.name, us.store_id "+
+        client.query("select store.id as id, "+
+        "st_x(store.location::geometry) as latitude, "+
+        "st_y(store.location::geometry) as longitude, "+
+        "us.name as name, store.created_by_user_id as created_by_user_id "+
         "from user_stores us "+
         "where user_id = $1", [userId],
         function(err, result){

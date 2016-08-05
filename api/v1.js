@@ -19,14 +19,14 @@ module.exports = function(options){
       latitude: req.query.lat,
       longitude: req.query.lon
     };
-    storeManager.getStoresWithinRadiusOfUser(req.profile.id, location, 50)
+    storeManager.findStoresWithinRadiusOfUser(req.profile.id, location, 50)
     .then(function(result){
       let storeIds = [];
       for (var r = 0; r < result.length; r++){
         storeIds.push(result[r].id);
       }
       res.json({
-        stores: storeIds
+        storeIds: result
       });
       res.end();
     });
