@@ -22,9 +22,10 @@ class ProductManager {
           reject(err);
           return;
         }
-        client.query("select id, name, description, status "+
-        "from products "+
-        "where user_id = $1", [userId],
+        client.query(`
+          select id, name, description, status
+          from products
+          where user_id = $1`, [userId],
         function(err, result){
           if (err){
             reject(err);

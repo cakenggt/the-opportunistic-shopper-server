@@ -41,14 +41,15 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("select store.id as id, "+
-        "st_x(store.location::geometry) as latitude, "+
-        "st_y(store.location::geometry) as longitude, "+
-        "us.name as name, store.created_by_user_id as created_by_user_id "+
-        "from user_stores us "+
-        "left join stores store on store.id = us.store_id "+
-        "where us.user_id = $1 and "+
-        "st_distance(st_geogfromtext('POINT('||$3||' '||$2||')'), store.location) <= $4",
+        client.query(`
+          select store.id as id,
+          st_x(store.location::geometry) as latitude,
+          st_y(store.location::geometry) as longitude,
+          us.name as name, store.created_by_user_id as created_by_user_id
+          from user_stores us
+          left join stores store on store.id = us.store_id
+          where us.user_id = $1 and
+          st_distance(st_geogfromtext('POINT('||$3||' '||$2||')'), store.location) <= $4`,
         [userId, location.latitude, location.longitude, radius],
         function(err, result){
           if (err){
@@ -83,12 +84,13 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("select store.id as id, "+
-        "st_x(store.location::geometry) as latitude, "+
-        "st_y(store.location::geometry) as longitude, "+
-        "store.name as name, store.created_by_user_id as created_by_user_id "+
-        "from stores store "+
-        "where st_distance(st_geogfromtext('POINT('||$2||' '||$1||')'), store.location) <= $3",
+        client.query(`
+          select store.id as id,
+          st_x(store.location::geometry) as latitude,
+          st_y(store.location::geometry) as longitude,
+          store.name as name, store.created_by_user_id as created_by_user_id
+          from stores store
+          where st_distance(st_geogfromtext('POINT('||$2||' '||$1||')'), store.location) <= $3`,
         [location.latitude, location.longitude, radius],
         function(err, result){
           if (err){
@@ -124,8 +126,9 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("insert into stores (name, location, created_by_user_id) "+
-        "values ($1, st_geogfromtext('POINT('||$3||' '||$2||')'), $4)",
+        client.query(`
+          insert into stores (name, location, created_by_user_id)
+          values ($1, st_geogfromtext('POINT('||$3||' '||$2||')'), $4)`,
         [name, location.latitude, location.longitude, userId],
         function(err, result){
           if (err){
@@ -154,10 +157,12 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("update stores "+
-        "set name = $1, location = st_geogfromtext('POINT('||$3||' '||$2||')'), "+
-        "created_by_user_id = $4 "+
-        "where id = $5",
+        client.query(`
+          update stores
+          set name = $1,
+          location = st_geogfromtext('POINT('||$3||' '||$2||')'),
+          created_by_user_id = $4
+          where id = $5`,
         [store.name, store.latitude,
         store.longitude, store.created_by_user_id, store.id],
         function(err, result){
@@ -187,12 +192,14 @@ class StoreManager {
           reject(err);
           return;
         }
-        client.query("select store.id as id, "+
-        "st_x(store.location::geometry) as latitude, "+
-        "st_y(store.location::geometry) as longitude, "+
-        "us.name as name, store.created_by_user_id as created_by_user_id "+
-        "from user_stores us "+
-        "where user_id = $1", [userId],
+        client.query(`
+          select store.id as id,
+          st_x(store.location::geometry) as latitude,
+          st_y(store.location::geometry) as longitude,
+          us.name as name,
+          store.created_by_user_id as created_by_user_id 
+          from user_stores us
+          where user_id = $1`, [userId],
         function(err, result){
           if (err){
             reject(err);
