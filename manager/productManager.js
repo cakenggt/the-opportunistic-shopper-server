@@ -78,6 +78,81 @@ class ProductManager {
       });
     });
   }
+
+  /**
+   * Creates store product associations. One association
+   * will be created for each store and product, resulting in
+   * storeIds.length * productIds.length new records.
+   * @param {Array.<Number>} storeIds Ids of the stores
+   * @param {Array.<Number>} productIds Ids of the products
+   * @returns {Promise} Promise which resolves with the result of the query
+   */
+  createStoreProducts(storeIds, productIds){
+    let self = this;
+    let query = '';
+    for (let s = 0; s < storeIds.length; s++){
+      let storeId = storeIds[s];
+      for (let p = 0; p < productIds.length; p++){
+        let productId = productIds[p];
+        query += `
+        insert into store_products
+        (store_id, product_id) values
+        (${storeId}, ${productId});`;
+      }
+    }
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query(query,
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result);
+        });
+      });
+    });
+  }
+
+  /**
+   * Deletes store product associations where the store_id is
+   * in storeIds AND the product_id is in productIds.
+   * @param {Array.<Number>} storeIds Ids of the stores
+   * @param {Array.<Number>} productIds Ids of the products
+   * @returns {Promise} Promise which resolves with the result of the query
+   */
+  deleteStoreProducts(storeIds, productIds){
+    let self = this;
+    return new Promise(function(resolve, reject){
+      pg.connect(self.connectionString, function(err, client, done){
+        if (err){
+          done();
+          reject(err);
+          return;
+        }
+        client.query(`
+          delete from store_products
+          where store_id in ($1)
+          and product_id in ($2)`, [storeIds, productIds],
+        function(err, result){
+          if (err){
+            reject(err);
+            done();
+            return;
+          }
+          done();
+          resolve(result);
+        });
+      });
+    });
+  }
 }
 
 module.exports = function(connectionString){
