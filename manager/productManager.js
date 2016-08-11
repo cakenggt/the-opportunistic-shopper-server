@@ -13,8 +13,8 @@ const pg = require('pg');
  */
 
 class ProductManager {
-  constructor(connectionString){
-    this.connectionString = connectionString;
+  constructor(models){
+    this.models = models;
   }
 
   /**
@@ -24,28 +24,11 @@ class ProductManager {
    * @returns {Promise} Promise which resolves with an array of Products
    */
   findProductsByUser(userId){
-    let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          select id, name, description, status
-          from products
-          where user_id = $1`, [userId],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result.rows);
-        });
-      });
+    return this.models.User.findOne({
+      id: userId
+    })
+    .then(function(user){
+      return user.getProducts();
     });
   }
 
@@ -95,30 +78,8 @@ class ProductManager {
    * @returns {Promise} Promise which resolves with the query result
    */
   createProduct(product){
-    let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          insert into products (name, description, user_id, status, sponsored)
-          values ($1, $2, $3, $4, $5)`,
-        [product.name, product.description, product.user_id,
-          product.status, product.sponsored],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result);
-        });
-      });
-    });
+    let builtProduct = this.models.Product.build(product);
+    return builtProduct.save();
   }
 
   /**

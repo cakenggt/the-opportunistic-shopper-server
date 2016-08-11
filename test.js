@@ -10,9 +10,7 @@ const models = db.import(__dirname + '/models');
 var expect = require('chai').expect;
 const userManager = require('./manager/userManager')(models);
 const storeManager = require('./manager/storeManager')(models);
-/*TODO reenable after sequelize conversion
 const productManager = require('./manager/productManager')(models);
-*/
 
 //test objects
 const testUser = {
@@ -44,10 +42,10 @@ before(function(){
   })
   .then(function(){
     return models.UserStore.sync({force: true});
+  })
+  .then(function(){
+    return models.Product.sync({force: true});
   });
-  /*TODO reenable after sequelize conversion
-  models.Product.sync({force: true});
-  */
 });
 
 describe('user manager', function(){
@@ -70,7 +68,7 @@ describe('user manager', function(){
       expect(user.googleId).to.equal(testUser.googleId);
       expect(user.id).to.exist;
       testUserId = user.id;
-      testProduct1.user_id = testUserId;
+      testProduct1.userId = testUserId;
     });
   });
 });
@@ -95,6 +93,7 @@ describe('store manager', function(){
   it('get stores within radius of user', function(){
     return storeManager.findStoresWithinRadiusOfUser(testUserId, testStore1.location, 5)
     .then(function(result){
+      expect(result[0]).to.exist;
       let store = result[0].get({
         plain: true
       });
@@ -102,21 +101,24 @@ describe('store manager', function(){
     });
   });
 });
-/*TODO reenable after sequelize conversion
 describe('product manager', function(){
   it('create product', function(){
     return productManager.createProduct(testProduct1)
     .then(function(){
       return productManager.findProductsByUser(testUserId)
       .then(function(result){
-        testProduct1Id = result[0].id;
+        expect(result[0]).to.exist;
+        let product = result[0].get({
+          plain: true
+        });
+        testProduct1Id = product.id;
       });
     });
-  });
+  });/*TODO reenable after sequelize conversion
   it('associate with test store 1', function(){
     return productManager.createStoreProducts([testStore1Id], [testProduct1Id]);
-  });
-});
+  });*/
+});/*TODO reenable after sequelize conversion
 describe('api', function(){
   describe('v1', function(){
     it('/all', function(){
@@ -133,5 +135,4 @@ describe('api', function(){
       });
     });
   });
-});
-*/
+});*/

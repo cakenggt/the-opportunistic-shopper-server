@@ -1,5 +1,5 @@
 module.exports = function(sequelize, DataTypes) {
-  const User = sequelize.define("user", {
+  const User = sequelize.define('user', {
     email: {
       type: DataTypes.STRING,
       validate: {
@@ -13,7 +13,7 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
   });
-  const Store = sequelize.define("store", {
+  const Store = sequelize.define('store', {
     name: {
       type: DataTypes.STRING,
       validate: {
@@ -37,13 +37,35 @@ module.exports = function(sequelize, DataTypes) {
   Store.belongsToMany(User, {
     through: UserStore
   });
+  const Product = sequelize.define('product', {
+    name: {
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: true
+      }
+    },
+    description: {
+      type: DataTypes.TEXT,
+      validate: {
+        notEmpty: true
+      }
+    },
+    status: {
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: true
+      }
+    },
+    sponsored: {
+      type: DataTypes.BOOLEAN
+    }
+  });
+  User.hasMany(Product);
   return {
     sequelize: sequelize,
     User: User,
     Store: Store,
     UserStore: UserStore,
-    /*TODO reenable after sequelize conversion
     Product: Product
-    */
   };
 };
