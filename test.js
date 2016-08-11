@@ -41,6 +41,9 @@ before(function(){
   return models.User.sync({force: true})
   .then(function(){
     return models.Store.sync({force: true});
+  })
+  .then(function(){
+    return models.UserStore.sync({force: true});
   });
   /*TODO reenable after sequelize conversion
   models.Product.sync({force: true});
@@ -86,17 +89,18 @@ describe('store manager', function(){
       });
     });
   });
-  /*TODO reenable after sequelize conversion
   it('create user_store', function(){
     return userManager.createUserStoreAssociation(testUserId, testStore1Id, testStore1.name);
   });
   it('get stores within radius of user', function(){
     return storeManager.findStoresWithinRadiusOfUser(testUserId, testStore1.location, 5)
     .then(function(result){
-      expect(result[0]).to.equal(testStore1Id);
+      let store = result[0].get({
+        plain: true
+      });
+      expect(store.id).to.equal(testStore1Id);
     });
   });
-  */
 });
 /*TODO reenable after sequelize conversion
 describe('product manager', function(){

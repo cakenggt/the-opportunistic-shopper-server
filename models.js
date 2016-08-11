@@ -23,10 +23,25 @@ module.exports = function(sequelize, DataTypes) {
     location: DataTypes.GEOGRAPHY,
   });
   User.hasMany(Store);
+  const UserStore = sequelize.define('userStore', {
+    name: {
+      type: DataTypes.STRING,
+      validate: {
+        notEmpty: true
+      }
+    }
+  });
+  User.belongsToMany(Store, {
+    through: UserStore
+  });
+  Store.belongsToMany(User, {
+    through: UserStore
+  });
   return {
     sequelize: sequelize,
     User: User,
     Store: Store,
+    UserStore: UserStore,
     /*TODO reenable after sequelize conversion
     Product: Product
     */

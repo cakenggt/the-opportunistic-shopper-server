@@ -34,37 +34,25 @@ class StoreManager {
    */
   findStoresWithinRadiusOfUser(userId, location, radius){
     let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          select store.id as id,
-          st_x(store.location::geometry) as latitude,
-          st_y(store.location::geometry) as longitude,
-          us.name as name, store.created_by_user_id as created_by_user_id
-          from user_stores us
-          left join stores store on store.id = us.store_id
-          where us.user_id = $1 and
-          st_distance(st_geogfromtext('POINT('||$3||' '||$2||')'), store.location) <= $4`,
-        [userId, location.latitude, location.longitude, radius],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          let ret = [];
-          let rows = result.rows;
-          for (let r = 0; r < rows.length; r++){
-            ret.push(rows[r].id);
-          }
-          resolve(ret);
-        });
+    return this.models.User.findOne({
+      where: {
+        id: userId
+      }
+    })
+    .then(function(user){
+      return user.getStores({
+        where: self.models.sequelize.where(
+          self.models.sequelize.fn(
+            'ST_Distance',
+            self.models.sequelize.col('store.location'),
+            self.models.sequelize.fn(
+              'ST_GEOGFROMTEXT',
+              'POINT(' + location.longitude + ' ' + location.latitude + ')'
+            )
+          ),
+          '<=',
+          radius
+        )
       });
     });
   }

@@ -85,25 +85,19 @@ class UserManager {
    */
   createUserStoreAssociation(userId, storeId, name){
     let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
+    return this.models.User.findOne({
+      where: {
+        id: userId
+      }
+    })
+    .then(function(user){
+      return self.models.Store.findOne({
+        where: {
+          id: storeId
         }
-        client.query(`
-          insert into user_stores
-          (user_id, store_id, name)
-          values ($1, $2, $3)`, [userId, storeId, name],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result);
+      }).then(function(store){
+        return user.addStore(store, {
+          name: name
         });
       });
     });
