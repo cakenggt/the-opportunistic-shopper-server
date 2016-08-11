@@ -79,8 +79,8 @@ class UserManager {
 
   /**
    * Creates a user store association.
-   * @param {UserStore} association Object representation of a
-   * user store association
+   * @param {Number} userId Id of the user
+   * @param {Number} storeId Id of the store
    * @returns {Promise} Promise which resolves with the result of the query
    */
   createUserStoreAssociation(userId, storeId, name){

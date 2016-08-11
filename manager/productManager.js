@@ -92,36 +92,30 @@ class ProductManager {
    */
   createStoreProducts(storeIds, productIds){
     let self = this;
-    let query = '';
+    let promises = [];
     for (let s = 0; s < storeIds.length; s++){
       let storeId = storeIds[s];
-      for (let p = 0; p < productIds.length; p++){
-        let productId = productIds[p];
-        query += `
-        insert into store_products
-        (store_id, product_id) values
-        (${storeId}, ${productId});`;
-      }
-    }
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(query,
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
+      promises.push(
+        this.models.Store.findOne({
+          where: {
+            id: storeId
           }
-          done();
-          resolve(result);
-        });
-      });
-    });
+        })
+        .then(function(store){
+          return self.models.Product.findAll({
+            where: {
+              id: {
+                $in: productIds
+              }
+            }
+          })
+          .then(function(products){
+            store.addProducts(products);
+          });
+        })
+      );
+    }
+    return Promise.all(promises);
   }
 
   /**

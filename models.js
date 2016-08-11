@@ -61,11 +61,19 @@ module.exports = function(sequelize, DataTypes) {
     }
   });
   User.hasMany(Product);
+  const StoreProduct = sequelize.define('storeProduct', {});
+  Product.belongsToMany(Store, {
+    through: StoreProduct
+  });
+  Store.belongsToMany(Product, {
+    through: StoreProduct
+  });
   return {
     sequelize: sequelize,
     User: User,
     Store: Store,
     UserStore: UserStore,
-    Product: Product
+    Product: Product,
+    StoreProduct: StoreProduct
   };
 };

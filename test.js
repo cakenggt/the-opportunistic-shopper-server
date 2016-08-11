@@ -45,6 +45,9 @@ before(function(){
   })
   .then(function(){
     return models.Product.sync({force: true});
+  })
+  .then(function(){
+    return models.StoreProduct.sync({force: true});
   });
 });
 
@@ -114,10 +117,10 @@ describe('product manager', function(){
         testProduct1Id = product.id;
       });
     });
-  });/*TODO reenable after sequelize conversion
+  });
   it('associate with test store 1', function(){
     return productManager.createStoreProducts([testStore1Id], [testProduct1Id]);
-  });*/
+  });
 });/*TODO reenable after sequelize conversion
 describe('api', function(){
   describe('v1', function(){
