@@ -40,10 +40,10 @@ const pg = require('pg');
  */
 
 class UserManager {
-  constructor(connectionString){
-    this.connectionString = connectionString;
-    this.storeManager = require('../manager/storeManager')(connectionString);
-    this.productManager = require('../manager/productManager')(connectionString);
+  constructor(models){
+    this.models = models;
+    this.storeManager = require('../manager/storeManager')(models);
+    this.productManager = require('../manager/productManager')(models);
   }
 
   /**
@@ -52,64 +52,10 @@ class UserManager {
    * @returns {Promise} Promise which resolves with one User
    */
   findUserByGoogleId(id){
-    let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          select *
-          from users
-          where google_id = $1`, [id],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result.rows[0]);
-        });
-      });
-    });
-  }
-
-  /**
-   * Inserts a new user into the db only if they don't exist already
-   * @param {String} id Google id of the user
-   * @param {String} email Email of the user
-   * @returns {Promise} Promise which resolves with the query result
-   */
-  createGoogleUserIfNotExists(id, email){
-    let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          insert into users (google_id, email)
-          select $1, $2
-          where not exists
-          (
-            select id from users
-            where google_id = $1
-          )`, [id, email],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result);
-        });
-      });
+    return this.models.User.findOne({
+      where: {
+        googleId: id
+      }
     });
   }
 
@@ -121,10 +67,13 @@ class UserManager {
    * @returns {Promise} Promise which resolves with one User
    */
   findOrCreateUserByGoogleId(id, email){
-    let self = this;
-    return this.createGoogleUserIfNotExists(id, email)
-    .then(function(){
-      return self.findUserByGoogleId(id);
+    return this.models.User.findOrCreate({
+      where: {
+        googleId: id
+      },
+      defaults: {
+        email: email
+      }
     });
   }
 
