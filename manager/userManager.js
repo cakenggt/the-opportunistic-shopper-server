@@ -1,7 +1,5 @@
 'use strict';
 
-const pg = require('pg');
-
 /**
  * A User record
  * @typedef {Object} User
@@ -104,127 +102,65 @@ class UserManager {
   }
 
   /**
-   * Deletes a user store association
-   * @param {Number} user_id Id of the user
-   * @param {Number} store_id Id of the store
-   * @returns {Promise} Promise which resolves with the result of the query
-   */
-  deleteUserStoreAssociation(user_id, store_id){
-    let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          delete
-          from user_stores
-          where user_id = $1 and store_id = $2`, [user_id, store_id],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result);
-        });
-      });
-    });
-  }
-
-  /**
-   * Updates a user store record.
-   * @param {UserStore} store Object representation of the user store to update
-   * @returns {Promise} Promise which resolves with the result of the query
-   */
-  updateUserStoreAssociation(association){
-    let self = this;
-    return new Promise(function(resolve, reject){
-      pg.connect(self.connectionString, function(err, client, done){
-        if (err){
-          done();
-          reject(err);
-          return;
-        }
-        client.query(`
-          update user_stores
-          set name = $1
-          where user_id = $2 and store_id = $3`,
-        [association.name, association.userId, association.store_id],
-        function(err, result){
-          if (err){
-            reject(err);
-            done();
-            return;
-          }
-          done();
-          resolve(result);
-        });
-      });
-    });
-  }
-
-  /**
    * Gets the complete store and product json for the user.
    * @param {Number} userId Id of the user
-   * @returns {StoreAndProductJSON} Store and product JSON
+   * @returns {Promise} Promise which results in a StoreAndProductJSON
    */
   getCompleteStoreAndProductDataByUser(userId){
-    let totalResult = {};
-    let self = this;
-    return Promise.all([
-      self.productManager.findProductsByUserAndFetchStores(userId)
-      .then(function(result){
-        let products = {};
-        let ids = [];
-        let data = {};
-        for (let r = 0; r < result.length; r++){
-          let res = result[r];
-          //If not already in the ids list, put there
-          if (!data[res.product_id]){
-            ids.push(res.product_id);
-          }
-          let entry = data[res.product_id]||{stores:[]};
-          entry.name = res.name;
-          entry.description = res.description;
-          entry.status = res.status;
-          if (res.store_id){
-            entry.stores.push(res.store_id);
-          }
-          data[res.product_id] = entry;
+    let totalResult = {
+      stores: {
+        ids: [],
+        data: {}
+      },
+      products: {
+        ids: [],
+        data: {}
+      }
+    };
+    return this.models.User.findOne({
+      where: {
+        id: userId
+      }
+    })
+    .then(function(user){
+      return user.getStores()
+      .then(function(stores){
+        for (let s = 0; s < stores.length; s++){
+          let store = stores[s];
+          let plainStore = store.get({
+            plain: true
+          });
+          totalResult.stores.ids.push(plainStore.id);
+          totalResult.stores.data[plainStore.id] = plainStore;
+          totalResult.stores.data[plainStore.id].products = [];
         }
-        products.ids = ids;
-        products.data = data;
-        totalResult.products = products;
-      }),
-      self.storeManager.findStoresByUserAndFetchProducts(userId)
-      .then(function(result){
-        let stores = {};
-        let ids = [];
-        let data = {};
-        for (let r = 0; r < result.length; r++){
-          let res = result[r];
-          //If not already in the ids list, put there
-          if (!data[res.store_id]){
-            ids.push(res.store_id);
-          }
-          let entry = data[res.store_id]||{products:[]};
-          entry.name = res.name;
-          entry.latitude = res.latitude;
-          entry.longitude = res.longitude;
-          if (res.product_id){
-            entry.products.push(res.product_id);
-          }
-          data[res.store_id] = entry;
-        }
-        stores.ids = ids;
-        stores.data = data;
-        totalResult.stores = stores;
       })
-    ])
+      .then(function(){
+        return user.getProducts()
+        .then(function(products){
+          for (let p = 0; p < products.length; p++){
+            let product = products[p];
+            let plainProduct = product.get({
+              plain: true
+            });
+            totalResult.products.ids.push(plainProduct.id);
+            totalResult.products.data[plainProduct.id] = plainProduct;
+            totalResult.products.data[plainProduct.id].stores = [];
+            product.getStores()
+            .then(function(stores){
+              for (let s = 0; s < stores.length; s++){
+                let store = stores[s];
+                let plainStore = store.get({
+                  plain: true
+                });
+                totalResult.products.data[plainProduct.id].stores.push(plainStore.id);
+                totalResult.stores.data[plainStore.id].products.push(plainProduct.id);
+              }
+            });
+          }
+        });
+      });
+    })
     .then(function(){
       return totalResult;
     });

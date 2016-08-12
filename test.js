@@ -4,7 +4,9 @@
 
 let credentials = require('./credentials');
 const Sequelize = require('sequelize');
-const db = new Sequelize(credentials.TEST_DATABASE_URL);
+const db = new Sequelize(credentials.TEST_DATABASE_URL, {
+  logging: false
+});
 const models = db.import(__dirname + '/models');
 
 var expect = require('chai').expect;
@@ -26,6 +28,14 @@ const testStore1 = {
   }
 };
 let testStore1Id;
+const testStore2 = {
+  name: 'test store 2',
+  location: {
+    latitude: 51.04,
+    longitude: 36.09
+  }
+};
+let testStore2Id;
 const testProduct1 = {
   name: 'testProduct1',
   description: 'test product description',
@@ -80,20 +90,26 @@ describe('store manager', function(){
   it('create store', function(){
     return storeManager.createStore(testStore1.name, testStore1.location, testUserId)
     .then(function(result){
+      testStore1Id = result.dataValues.id;
+      return storeManager.createStore(testStore2.name, testStore2.location, testUserId);
+    })
+    .then(function(result){
+      testStore2Id = result.dataValues.id;
       return storeManager.findStoresWithinRadiusOfLocation(testStore1.location, 5)
       .then(function(result){
         expect(result[0]).to.exist;
         let store = result[0].get({
           plain: true
         });
-        testStore1Id = store.id;
+        expect(store.id).to.equal(testStore1Id);
       });
     });
   });
   it('create user_store', function(){
-    return userManager.createUserStoreAssociation(testUserId, testStore1Id, testStore1.name);
+    return userManager.createUserStoreAssociation(testUserId, testStore1Id, testStore1.name + ' association');
   });
   it('get stores within radius of user', function(){
+    let customName = testStore1.name + ' association';
     return storeManager.findStoresWithinRadiusOfUser(testUserId, testStore1.location, 5)
     .then(function(result){
       expect(result[0]).to.exist;
@@ -101,6 +117,7 @@ describe('store manager', function(){
         plain: true
       });
       expect(store.id).to.equal(testStore1Id);
+      expect(store.userStore.name).to.equal(customName);
     });
   });
 });
@@ -121,7 +138,7 @@ describe('product manager', function(){
   it('associate with test store 1', function(){
     return productManager.createStoreProducts([testStore1Id], [testProduct1Id]);
   });
-});/*TODO reenable after sequelize conversion
+});
 describe('api', function(){
   describe('v1', function(){
     it('/all', function(){
@@ -133,9 +150,10 @@ describe('api', function(){
         expect(result.products.data[testProduct1Id].description).to.equal(testProduct1.description);
         expect(result.stores).to.exist;
         expect(result.stores.ids).to.have.length.gt(0);
+        expect(result.stores.data[testStore2Id]).to.not.exist;
         expect(result.stores.data[testStore1Id]).to.exist;
         expect(result.stores.data[testStore1Id].name).to.equal(testStore1.name);
       });
     });
   });
-});*/
+});

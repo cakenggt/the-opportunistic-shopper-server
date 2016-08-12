@@ -22,7 +22,7 @@ module.exports = function(sequelize, DataTypes) {
     },
     location: DataTypes.GEOGRAPHY,
   });
-  User.hasMany(Store);
+  User.hasMany(Store, {as: 'CreatedStores'});
   const UserStore = sequelize.define('userStore', {
     name: {
       type: DataTypes.STRING,
