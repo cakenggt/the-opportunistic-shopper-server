@@ -5,7 +5,7 @@
 let credentials = require('./credentials');
 const Sequelize = require('sequelize');
 const db = new Sequelize(credentials.TEST_DATABASE_URL, {
-  logging: false
+  logging: true
 });
 const models = db.import(__dirname + '/models');
 
@@ -102,6 +102,16 @@ describe('store manager', function(){
           plain: true
         });
         expect(store.id).to.equal(testStore1Id);
+      })
+      .then(function(){
+        let wrongLoc = {
+          latitude: testStore1.location.latitude+1,
+          longitude: testStore1.location.longitude+1
+        };
+        return storeManager.findStoresWithinRadiusOfLocation(wrongLoc, 5)
+        .then(function(result){
+          expect(result).to.have.length.equals(0);
+        });
       });
     });
   });

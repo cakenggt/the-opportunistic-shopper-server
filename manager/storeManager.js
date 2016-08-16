@@ -31,7 +31,6 @@ class StoreManager {
    * @returns {Promise} Promise which resolves with Array.<Store>
    */
   findStoresWithinRadiusOfUser(userId, location, radius){
-    let self = this;
     return this.models.User.findOne({
       where: {
         id: userId
@@ -39,18 +38,15 @@ class StoreManager {
     })
     .then(function(user){
       return user.getStores({
-        where: self.models.sequelize.where(
-          self.models.sequelize.fn(
-            'ST_Distance',
-            self.models.sequelize.col('store.location'),
-            self.models.sequelize.fn(
-              'ST_GEOGFROMTEXT',
-              'POINT(' + location.longitude + ' ' + location.latitude + ')'
-            )
-          ),
-          '<=',
-          radius
-        )
+        scope: [
+          {
+            method: [
+              'distance',
+              location,
+              radius
+            ]
+          }
+        ]
       });
     });
   }
@@ -62,20 +58,13 @@ class StoreManager {
    * @returns {Promise} Promise which resolves with Array.<Store>
    */
   findStoresWithinRadiusOfLocation(location, radius){
-    return this.models.Store.findAll({
-      where: this.models.sequelize.where(
-        this.models.sequelize.fn(
-          'ST_Distance',
-          this.models.sequelize.col('location'),
-          this.models.sequelize.fn(
-            'ST_GEOGFROMTEXT',
-            'POINT(' + location.longitude + ' ' + location.latitude + ')'
-          )
-        ),
-        '<=',
+    return this.models.Store.scope([{
+      method: [
+        'distance',
+        location,
         radius
-      )
-    });
+      ]
+    }]).findAll();
   }
 
   /**

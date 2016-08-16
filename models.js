@@ -21,6 +21,25 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     location: DataTypes.GEOGRAPHY,
+  }, {
+    scopes: {
+      distance: function(location, radius){
+        return {
+          where: sequelize.where(
+            sequelize.fn(
+              'ST_Distance',
+              sequelize.col('store.location'),
+              sequelize.fn(
+                'ST_GEOGFROMTEXT',
+                'POINT(' + location.longitude + ' ' + location.latitude + ')'
+              )
+            ),
+            '<=',
+            radius
+          )
+        };
+      }
+    }
   });
   User.hasMany(Store, {as: 'CreatedStores'});
   const UserStore = sequelize.define('userStore', {
