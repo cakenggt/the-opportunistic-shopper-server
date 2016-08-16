@@ -89,14 +89,8 @@ class UserManager {
       }
     })
     .then(function(user){
-      return self.models.Store.findOne({
-        where: {
-          id: storeId
-        }
-      }).then(function(store){
-        return user.addStore(store, {
-          name: name
-        });
+      return user.addStore(storeId, {
+        name: name
       });
     });
   }
